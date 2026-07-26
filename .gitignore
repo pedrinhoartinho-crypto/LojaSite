@@ -1,0 +1,5 @@
+node_modules/
+.env
+loja.db
+public/uploads/*
+!public/uploads/.gitkeep

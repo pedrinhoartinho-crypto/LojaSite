@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: loja-belavista
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: TOKEN_ADMIN
+        sync: false
+      - key: PIX_KEY
+        sync: false
+      - key: OPENCLOUD_API_KEY
+        sync: false
+      - key: UNIVERSE_ID
+        sync: false
+      - key: EXPIRA_EM_MINUTOS
+        value: "1440"

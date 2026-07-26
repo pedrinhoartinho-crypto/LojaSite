@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bela Vista Roleplay - Admin</title>
+  <link rel="stylesheet" href="/css/estilo.css">
+  <style>
+    .admin-container { margin: 30px 0; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .admin-header h2 { color: var(--laranja-500); }
+    .admin-token-input { background: var(--cinza-800); border: 1px solid var(--cinza-600); color: var(--branco); padding: 10px 15px; border-radius: 8px; width: 250px; font-size: 13px; }
+    .admin-token-input:focus { border-color: var(--laranja-500); outline: none; }
+    .admin-btn { background: var(--laranja-600); color: var(--branco); border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+    .admin-btn:hover { box-shadow: 0 3px 15px rgba(255,136,0,0.3); }
+    .admin-btn.secondary { background: var(--cinza-700); }
+    .admin-btn.secondary:hover { background: var(--cinza-600); }
+    .admin-btn.danger { background: #cc3333; }
+    .admin-btn.danger:hover { box-shadow: 0 3px 15px rgba(204,51,51,0.3); }
+    .admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .admin-table { width: 100%; border-collapse: collapse; background: var(--cinza-900); border: 1px solid var(--cinza-700); border-radius: 8px; overflow: hidden; }
+    .admin-table th { background: var(--cinza-800); color: var(--laranja-300); padding: 12px 15px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+    .admin-table td { padding: 12px 15px; border-top: 1px solid var(--cinza-800); font-size: 13px; color: var(--cinza-200); }
+    .admin-table tr:hover td { background: var(--cinza-800); }
+    .admin-table .valor-destaque { color: var(--laranja-500); font-weight: 700; font-size: 15px; }
+    .admin-table .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .status-badge.pendente { background: rgba(255,136,0,0.15); color: var(--laranja-500); border: 1px solid var(--laranja-600); }
+    .status-badge.concluido { background: rgba(0,200,83,0.15); color: #00c853; border: 1px solid #00c853; }
+    .status-badge.cancelado { background: rgba(204,51,51,0.15); color: #cc3333; border: 1px solid #cc3333; }
+    .status-badge.expirado { background: rgba(255,255,255,0.1); color: var(--cinza-400); border: 1px solid var(--cinza-600); }
+    .admin-actions { display: flex; gap: 5px; }
+    .admin-pagination { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+    .admin-pagination button { background: var(--cinza-800); color: var(--cinza-200); border: 1px solid var(--cinza-600); padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .admin-pagination button:hover { background: var(--cinza-700); }
+    .admin-pagination button.ativo { background: var(--laranja-600); color: var(--branco); border-color: var(--laranja-600); }
+    .admin-filters { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+    .admin-alert { padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; display: none; }
+    .admin-alert.success { display: block; background: rgba(0,200,83,0.15); color: #00c853; border: 1px solid #00c853; }
+    .admin-alert.error { display: block; background: rgba(204,51,51,0.15); color: #cc3333; border: 1px solid #cc3333; }
+    @media (max-width: 768px) {
+      .admin-table { font-size: 12px; }
+      .admin-table th, .admin-table td { padding: 8px 10px; }
+      .admin-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-content">
+      <div class="logo">
+        <h1>BELA VISTA</h1>
+        <span>ADMIN</span>
+      </div>
+      <nav>
+        <a href="/">Loja</a>
+        <a href="/admin.html" class="ativo">Painel Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container admin-container">
+    <div class="admin-header">
+      <h2>Painel de Controle</h2>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="password" class="admin-token-input" id="token-input" placeholder="Token Admin">
+        <button class="admin-btn" onclick="login()">Entrar</button>
+      </div>
+    </div>
+
+    <div id="admin-login" style="text-align:center;padding:60px 0">
+      <p style="color:var(--cinza-400);font-size:16px">Insira o token admin para acessar o painel.</p>
+    </div>
+
+    <div id="admin-painel" style="display:none">
+      <div class="admin-alert" id="admin-alert"></div>
+
+      <div class="admin-filters">
+        <button class="admin-btn" onclick="carregarTodos()" style="font-size:11px">Todos os Pedidos</button>
+        <button class="admin-btn secondary" onclick="carregarPendentes()" style="font-size:11px">Pendentes</button>
+        <button class="admin-btn secondary" onclick="gerenciarProdutos()" style="font-size:11px">Produtos</button>
+      </div>
+
+      <div id="admin-produtos" style="display:none;margin-bottom:20px">
+        <h3 style="color:var(--laranja-500);margin-bottom:15px">Gerenciar Produtos</h3>
+        <div id="produtos-lista"></div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="admin-table" id="admin-tabela">
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Data</th>
+              <th>Comprador</th>
+              <th>Produto</th>
+              <th>Valor</th>
+              <th>Valor Final</th>
+              <th>Status</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="admin-pagination" id="admin-pagination"></div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 Bela Vista Roleplay. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script>
+    let token = '';
+    let paginaAtual = 1;
+    let totalPaginas = 1;
+
+    function login() {
+      token = document.getElementById('token-input').value.trim();
+      if (!token) { alert('Token obrigatorio'); return; }
+      sessionStorage.setItem('bvr_admin_token', token);
+      document.getElementById('admin-login').style.display = 'none';
+      document.getElementById('admin-painel').style.display = 'block';
+      carregarTodos();
+    }
+
+    function alerta(msg, tipo) {
+      const el = document.getElementById('admin-alert');
+      el.textContent = msg;
+      el.className = 'admin-alert ' + tipo;
+      setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    async function api(path, metodo = 'GET', body = null) {
+      const opts = { method: metodo, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(path, opts);
+      if (res.status === 401) { alerta('Token invalido!', 'error'); return null; }
+      return res.json();
+    }
+
+    async function carregarTodos(pagina = 1) {
+      document.getElementById('admin-produtos').style.display = 'none';
+      document.getElementById('admin-tabela').style.display = '';
+      document.getElementById('admin-pagination').style.display = '';
+      paginaAtual = pagina;
+      const data = await api('/api/admin/pagamentos?page=' + pagina);
+      if (!data) return;
+      renderTabela(data.dados, data.total_pages);
+    }
+
+    async function carregarPendentes() {
+      const data = await api('/api/admin/pagamentos/pendentes');
+      if (!data) return;
+      renderTabela(data.dados, 1);
+    }
+
+    function renderTabela(dados, totalPg) {
+      totalPaginas = totalPg || 1;
+      const tbody = document.getElementById('admin-tbody');
+      if (!dados || dados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--cinza-400)">Nenhum pedido encontrado</td></tr>';
+        document.getElementById('admin-pagination').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = dados.map(p => {
+        const stCls = p.status === 'pendente' ? 'pendente' : p.status === 'concluido' ? 'concluido' : p.status === 'cancelado' ? 'cancelado' : 'expirado';
+        const stTxt = p.status.charAt(0).toUpperCase() + p.status.slice(1);
+        const qtdInfo = p.produto_tipo === 'armas' && p.item_quantidade > 1 ? ' x' + p.item_quantidade : '';
+
+        return `
+          <tr>
+            <td><strong style="color:var(--branco)">#${p.pedido_numero || p.id}</strong></td>
+            <td style="font-size:12px">${new Date(p.criado_em + 'Z').toLocaleString('pt-BR')}</td>
+            <td>${p.comprador_nome || '---'}</td>
+            <td>${p.produto_nome}${qtdInfo}</td>
+            <td>R$ ${p.valor.toFixed(2)}</td>
+            <td class="valor-destaque">R$ ${(p.valor_final || p.valor).toFixed(2)}</td>
+            <td><span class="status-badge ${stCls}">${stTxt}</span></td>
+            <td>
+              <div class="admin-actions">
+                ${p.status === 'pendente' ? `
+                  <button class="admin-btn" style="font-size:11px;padding:6px 12px" onclick="confirmarPagamento(${p.id})">Confirmar</button>
+                  <button class="admin-btn danger" style="font-size:11px;padding:6px 12px" onclick="cancelarPedido(${p.id})">Recusar</button>
+                ` : p.chave ? `<span style="color:var(--laranja-300);font-size:12px">${p.chave}</span>` : `<span style="color:var(--cinza-400);font-size:12px">${p.status}</span>`}
+                <button class="admin-btn danger" style="font-size:11px;padding:6px 12px" onclick="excluirPedido(${p.id})">Excluir</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const pagDiv = document.getElementById('admin-pagination');
+      let pagHtml = '';
+      for (let i = 1; i <= totalPg; i++) {
+        pagHtml += `<button class="${i === paginaAtual ? 'ativo' : ''}" onclick="carregarTodos(${i})">${i}</button>`;
+      }
+      pagDiv.innerHTML = pagHtml;
+    }
+
+    async function confirmarPagamento(pedidoId) {
+      if (!confirm('Confirmar pagamento deste pedido? A key sera gerada automaticamente.')) return;
+      const data = await api('/api/admin/confirmar-pagamento', 'POST', { pedido_id: pedidoId });
+      if (data && data.ok) {
+        alerta('Pagamento confirmado! Key sendo gerada...', 'success');
+        setTimeout(() => carregarTodos(paginaAtual), 2000);
+      }
+    }
+
+    async function cancelarPedido(pedidoId) {
+      if (!confirm('Cancelar este pedido?')) return;
+      const data = await api('/api/admin/cancelar-pedido', 'POST', { pedido_id: pedidoId });
+      if (data && data.success) {
+        alerta('Pedido cancelado', 'success');
+        carregarTodos(paginaAtual);
+      }
+    }
+
+    async function excluirPedido(pedidoId) {
+      if (!confirm('Excluir este pedido permanentemente? Nao tem como desfazer.')) return;
+      const data = await api('/api/admin/excluir-pedido', 'POST', { pedido_id: pedidoId });
+      if (data && data.success) {
+        alerta('Pedido excluido', 'success');
+        carregarTodos(paginaAtual);
+      }
+    }
+
+    async function gerenciarProdutos() {
+      document.getElementById('admin-tabela').style.display = 'none';
+      document.getElementById('admin-pagination').style.display = 'none';
+      document.getElementById('admin-produtos').style.display = 'block';
+
+      const data = await api('/api/produtos');
+      if (!data || !data.produtos) return;
+      const div = document.getElementById('produtos-lista');
+
+      div.innerHTML = data.produtos.map(p => `
+        <div style="background:var(--cinza-800);border:1px solid var(--cinza-700);border-radius:8px;padding:12px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+          <div style="flex-shrink:0">
+            ${p.imagem_url ? `<img src="${p.imagem_url}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">` : `<div style="width:40px;height:40px;background:var(--cinza-700);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">🎁</div>`}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;color:var(--branco);font-size:14px">${p.nome}</div>
+            <div style="color:var(--cinza-400);font-size:11px">${p.tipo} - R$ ${p.preco.toFixed(2)}</div>
+          </div>
+          <div style="flex-shrink:0;display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="img-input-${p.id}" value="${p.imagem_url || ''}" placeholder="URL da imagem" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:6px 10px;border-radius:6px;font-size:12px;width:140px">
+            <button class="admin-btn" style="font-size:10px;padding:6px 8px" onclick="salvarImagemUrl(${p.id})">URL</button>
+            <form style="display:inline" onsubmit="uploadImagem(event, ${p.id})" id="upload-form-${p.id}">
+              <label class="admin-btn" style="font-size:10px;padding:6px 8px;cursor:pointer;background:var(--cinza-700)">
+                Upload
+                <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none" onchange="document.getElementById('upload-form-${p.id}').requestSubmit()">
+              </label>
+            </form>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function salvarImagemUrl(produtoId) {
+      const url = document.getElementById('img-input-' + produtoId).value.trim();
+      const data = await api('/api/admin/produtos/' + produtoId, 'PATCH', { imagem_url: url });
+      if (data && data.success) {
+        alerta('Imagem atualizada!', 'success');
+        gerenciarProdutos();
+      }
+    }
+
+    async function uploadImagem(event, produtoId) {
+      event.preventDefault();
+      const form = document.getElementById('upload-form-' + produtoId);
+      const fileInput = form.querySelector('input[type="file"]');
+      if (!fileInput.files.length) return;
+
+      const fd = new FormData();
+      fd.append('imagem', fileInput.files[0]);
+
+      const res = await fetch('/api/admin/produtos/' + produtoId + '/upload-imagem', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('img-input-' + produtoId).value = data.imagem_url;
+        alerta('Imagem enviada!', 'success');
+        gerenciarProdutos();
+      } else {
+        alerta('Erro: ' + (data.error || 'desconhecido'), 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const saved = sessionStorage.getItem('bvr_admin_token');
+      if (saved) {
+        document.getElementById('token-input').value = saved;
+        login();
+      }
+      document.getElementById('token-input').focus();
+    });
+  </script>
+</body>
+</html>

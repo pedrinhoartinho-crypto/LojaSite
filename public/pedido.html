@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bela Vista Roleplay - Pedido</title>
+  <link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+  <header>
+    <div class="container header-content">
+      <div class="logo">
+        <h1>BELA VISTA</h1>
+        <span>ROLEPLAY</span>
+      </div>
+      <nav>
+        <a href="/">Loja</a>
+        <a href="/" onclick="mostrarPedidos()">Meus Pedidos</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="pedido-container" id="pedido-container">
+      <div class="carregando">Buscando pedido...</div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 Bela Vista Roleplay. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="/js/loja.js"></script>
+  <script>
+    const numeroPedido = window.location.pathname.split('/').pop();
+    if (numeroPedido) {
+      buscarPedido(numeroPedido);
+    }
+  </script>
+</body>
+</html>

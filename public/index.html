@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bela Vista Roleplay - Loja</title>
+  <link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+  <header>
+    <div class="container header-content">
+      <div class="logo">
+        <h1>BELA VISTA</h1>
+        <span>ROLEPLAY</span>
+      </div>
+      <nav>
+        <a href="/" class="ativo">Loja</a>
+        <a href="#" onclick="mostrarPedidos()">Meus Pedidos</a>
+        <a href="/admin.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h2>Loja Oficial</h2>
+      <p>Compre itens, dinheiro e veiculos para turbinar sua experiencia no Bela Vista Roleplay!</p>
+    </div>
+  </section>
+
+  <main class="container">
+    <div class="filtros">
+      <button class="filtro-btn ativo" onclick="filtrar('todos')">Todos</button>
+      <button class="filtro-btn" onclick="filtrar('dinheiro')">Dinheiro</button>
+      <button class="filtro-btn" onclick="filtrar('armas')">Armas</button>
+      <button class="filtro-btn" onclick="filtrar('carros')">Veiculos</button>
+    </div>
+
+    <div class="produtos-grid" id="produtos"></div>
+  </main>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <button class="modal-fechar" onclick="fecharModal()">&times;</button>
+      <div id="modal-conteudo"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 Bela Vista Roleplay. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="/js/loja.js"></script>
+</body>
+</html>
