@@ -3,7 +3,7 @@ const UNIVERSE_ID = process.env.ROBLOX_UNIVERSE_ID;
 const DATASTORE_NAME = 'SistemaChavesV3';
 
 function openCloudConfigurado() {
-  return API_KEY && API_KEY !== 'sua_api_key_aqui' && UNIVERSE_ID && UNIVERSE_ID !== 'seu_universe_id_aqui' && !API_KEY.startsWith('NVA9');
+  return !!API_KEY && !!UNIVERSE_ID;
 }
 
 function gerarChaveAleatoria() {

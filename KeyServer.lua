@@ -11,10 +11,10 @@ local Concessionaria = ServicoArmazenamentoReplicado:WaitForChild("Concessionari
 local VeiculosJogo = Concessionaria:WaitForChild("Veiculos")
 local FerramentasJogo = ServicoArmazenamentoServidor:WaitForChild("Tools")
 
-local URL_LOJA = "http://localhost:3000"
+local URL_LOJA = "https://loja-belavista.onrender.com"
 local TOKEN_ADMIN = "BELA_VISTA_ROLEPLAY"
 local INTERVALO_POLLING = 30
-local WebhookDiscord = "https://discord.com/api/webhooks/1514653819357888642/bFYylJvpPKo1Hp4_P2sPpxyhG1pDbyeLaIJT7tvzCGQy2Y7cDcCmHOTLf-Hh1MwchwsR"
+local WebhookDiscord = "https://discord.com/api/webhooks/1531034787522019480/5okhot6B0i6VupYY7p88KmyM9382LJQnpRjVPb3_ZUTyqGwnuAb_ILe0XkuS-vSNuTMT"
 
 local EventoResgate = ServicoArmazenamentoReplicado:FindFirstChild("EventoResgateKey") or Instance.new("RemoteEvent")
 EventoResgate.Name = "EventoResgateKey"
@@ -241,7 +241,7 @@ EventoResgate.OnServerEvent:Connect(function(Jogador, ChaveDigitada)
 		return
 	end
 
-	local DadosLoja = FazerRequisicaoLoja("POST", "/api/usar-chave", { chave = ChaveDigitada })
+	local DadosLoja = FazerRequisicaoLoja("POST", "/api/admin/usar-chave", { chave = ChaveDigitada })
 	if DadosLoja and DadosLoja.success then
 		if DadosLoja.tipo == "dinheiro" then Entregue, _ = EntregarDinheiro(Jogador, DadosLoja.quantidade)
 		elseif DadosLoja.tipo == "armas" then Entregue, _ = EntregarArma(Jogador, DadosLoja.item_nome, DadosLoja.quantidade or 1)
