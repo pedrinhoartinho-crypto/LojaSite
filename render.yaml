@@ -17,3 +17,5 @@ services:
         sync: false
       - key: EXPIRA_EM_MINUTOS
         value: "1440"
+      - key: DISCORD_WEBHOOK_URL
+        sync: false

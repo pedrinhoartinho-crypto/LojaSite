@@ -46,7 +46,20 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-db.init().then(() => {
+db.init().then(async () => {
+  const count = db.db.prepare('SELECT COUNT(*) as total FROM produtos');
+  count.step();
+  const total = count.getAsObject().total;
+  count.free();
+
+  if (total === 0) {
+    console.log('Banco vazio — populando catalogo...');
+    const seedDatabase = require('./src/seed');
+    await seedDatabase();
+  }
+
+  setInterval(() => db.limparPedidosExpirados(), 60000);
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log('==========================================');
     console.log('  BELA VISTA ROLEPLAY - LOJA WEB');

@@ -1,4 +1,3 @@
-require('dotenv').config();
 const db = require('./database');
 
 const produtos = [
@@ -60,9 +59,7 @@ function dinheiro() {
   }));
 }
 
-async function run() {
-  await db.init();
-
+async function seedDatabase() {
   db.db.run('DELETE FROM produtos');
   db.db.run("DELETE FROM sqlite_sequence WHERE name='produtos'");
 
@@ -83,7 +80,13 @@ async function run() {
   fs.writeFileSync(path.join(__dirname, '..', 'loja.db'), buffer);
 
   console.log(`[SEED] ${produtos.length} produtos inseridos!`);
-  process.exit(0);
 }
 
-run();
+if (require.main === module) {
+  require('dotenv').config();
+  db.init().then(() => {
+    seedDatabase().then(() => process.exit(0));
+  });
+}
+
+module.exports = seedDatabase;

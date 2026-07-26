@@ -223,6 +223,23 @@ router.post('/usar-chave', (req, res) => {
   });
 });
 
+router.get('/produtos', (req, res) => {
+  const produtos = db.listarTodosProdutos();
+  res.json({ produtos });
+});
+
+router.patch('/produtos/:id/ativo', (req, res) => {
+  const { id } = req.params;
+  const produto = db.buscarProduto(id);
+  if (!produto) {
+    const all = db.listarTodosProdutos();
+    const found = all.find(p => p.id == id);
+    if (!found) return res.status(404).json({ error: 'Produto nao encontrado' });
+  }
+  db.toggleProdutoAtivo(id);
+  res.json({ success: true });
+});
+
 router.post('/produtos', (req, res) => {
   const { nome, descricao, tipo, item_nome, item_quantidade, preco, imagem_url } = req.body;
   if (!nome || !tipo || !preco) return res.status(400).json({ error: 'nome, tipo e preco obrigatorios' });
@@ -265,9 +282,10 @@ router.post('/produtos/:id/upload-imagem', upload.single('imagem'), (req, res) =
 
 router.patch('/produtos/:id', (req, res) => {
   const { id } = req.params;
-  const { imagem_url, nome, descricao, preco } = req.body;
+  const { imagem_url, nome, descricao, preco, tipo, item_nome, item_quantidade } = req.body;
 
-  const produto = db.buscarProduto(id);
+  const all = db.listarTodosProdutos();
+  const produto = all.find(p => p.id == id);
   if (!produto) return res.status(404).json({ error: 'Produto nao encontrado' });
 
   const campos = {};
@@ -275,6 +293,9 @@ router.patch('/produtos/:id', (req, res) => {
   if (nome !== undefined) campos.nome = nome;
   if (descricao !== undefined) campos.descricao = descricao;
   if (preco !== undefined) campos.preco = preco;
+  if (tipo !== undefined) campos.tipo = tipo;
+  if (item_nome !== undefined) campos.item_nome = item_nome || null;
+  if (item_quantidade !== undefined) campos.item_quantidade = item_quantidade;
 
   if (Object.keys(campos).length === 0) return res.status(400).json({ error: 'Nenhum campo para atualizar' });
 

@@ -223,6 +223,21 @@ function marcarKeyUsada(key) {
   salvar();
 }
 
+function listarTodosProdutos() {
+  const stmt = db.prepare('SELECT * FROM produtos ORDER BY ativo DESC, preco ASC');
+  const rows = [];
+  while (stmt.step()) rows.push(stmt.getAsObject());
+  stmt.free();
+  return rows;
+}
+
+function toggleProdutoAtivo(id) {
+  const stmt = db.prepare('UPDATE produtos SET ativo = CASE WHEN ativo = 1 THEN 0 ELSE 1 END WHERE id = ?');
+  stmt.run([id]);
+  stmt.free();
+  salvar();
+}
+
 module.exports = {
   get db() { return db; },
   init,
@@ -240,5 +255,7 @@ module.exports = {
   limparPedidosExpirados,
   registrarKey,
   buscarKey,
-  marcarKeyUsada
+  marcarKeyUsada,
+  listarTodosProdutos,
+  toggleProdutoAtivo
 };

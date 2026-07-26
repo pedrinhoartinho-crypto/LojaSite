@@ -82,6 +82,19 @@
 
       <div id="admin-produtos" style="display:none;margin-bottom:20px">
         <h3 style="color:var(--laranja-500);margin-bottom:15px">Gerenciar Produtos</h3>
+        <div style="background:var(--cinza-800);border:1px solid var(--laranja-700);border-radius:8px;padding:12px 15px;margin-bottom:15px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="color:var(--laranja-400);font-size:13px;font-weight:600">Novo Produto:</span>
+          <input type="text" id="novo-nome" placeholder="Nome" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:6px 10px;border-radius:6px;font-size:12px;width:130px">
+          <select id="novo-tipo" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:6px 10px;border-radius:6px;font-size:12px">
+            <option value="dinheiro">Dinheiro</option>
+            <option value="armas">Armas</option>
+            <option value="carros">Carros</option>
+          </select>
+          <input type="text" id="novo-item" placeholder="item_nome" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:6px 10px;border-radius:6px;font-size:12px;width:100px">
+          <input type="number" id="novo-qtd" value="1" min="1" placeholder="Qtd" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:6px 10px;border-radius:6px;font-size:12px;width:60px">
+          <input type="text" id="novo-preco" placeholder="Preco" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:6px 10px;border-radius:6px;font-size:12px;width:80px">
+          <button class="admin-btn" style="font-size:12px;padding:6px 16px" onclick="criarProduto()">Criar</button>
+        </div>
         <div id="produtos-lista"></div>
       </div>
 
@@ -234,31 +247,80 @@
       document.getElementById('admin-pagination').style.display = 'none';
       document.getElementById('admin-produtos').style.display = 'block';
 
-      const data = await api('/api/produtos');
+      const data = await api('/api/admin/produtos');
       if (!data || !data.produtos) return;
       const div = document.getElementById('produtos-lista');
 
       div.innerHTML = data.produtos.map(p => `
-        <div style="background:var(--cinza-800);border:1px solid var(--cinza-700);border-radius:8px;padding:12px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <div style="background:var(--cinza-800);border:1px solid ${p.ativo ? 'var(--cinza-700)' : 'var(--laranja-900)'};border-radius:8px;padding:12px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px;opacity:${p.ativo ? 1 : 0.5}">
           <div style="flex-shrink:0">
             ${p.imagem_url ? `<img src="${p.imagem_url}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">` : `<div style="width:40px;height:40px;background:var(--cinza-700);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">🎁</div>`}
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-weight:600;color:var(--branco);font-size:14px">${p.nome}</div>
-            <div style="color:var(--cinza-400);font-size:11px">${p.tipo} - R$ ${p.preco.toFixed(2)}</div>
+            <input type="text" id="prod-nome-${p.id}" value="${p.nome}" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:4px 8px;border-radius:4px;font-size:13px;width:140px;display:block;margin-bottom:4px">
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <select id="prod-tipo-${p.id}" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:4px 6px;border-radius:4px;font-size:11px">
+                <option value="dinheiro" ${p.tipo === 'dinheiro' ? 'selected' : ''}>Dinheiro</option>
+                <option value="armas" ${p.tipo === 'armas' ? 'selected' : ''}>Armas</option>
+                <option value="carros" ${p.tipo === 'carros' ? 'selected' : ''}>Carros</option>
+              </select>
+              <input type="text" id="prod-item-${p.id}" value="${p.item_nome || ''}" placeholder="item_nome" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:4px 6px;border-radius:4px;font-size:11px;width:100px">
+              <input type="number" id="prod-qtd-${p.id}" value="${p.item_quantidade || 1}" min="1" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:4px 6px;border-radius:4px;font-size:11px;width:50px">
+              <input type="text" id="prod-preco-${p.id}" value="${p.preco.toFixed(2)}" placeholder="Preco" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:4px 6px;border-radius:4px;font-size:11px;width:70px">
+              <button class="admin-btn" style="font-size:10px;padding:4px 8px" onclick="salvarProduto(${p.id})">Salvar</button>
+            </div>
           </div>
           <div style="flex-shrink:0;display:flex;gap:5px;align-items:center;flex-wrap:wrap">
-            <input type="text" id="img-input-${p.id}" value="${p.imagem_url || ''}" placeholder="URL da imagem" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:6px 10px;border-radius:6px;font-size:12px;width:140px">
-            <button class="admin-btn" style="font-size:10px;padding:6px 8px" onclick="salvarImagemUrl(${p.id})">URL</button>
+            <input type="text" id="img-input-${p.id}" value="${p.imagem_url || ''}" placeholder="URL imagem" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:4px 6px;border-radius:4px;font-size:11px;width:100px">
+            <button class="admin-btn" style="font-size:10px;padding:4px 6px" onclick="salvarImagemUrl(${p.id})">URL</button>
             <form style="display:inline" onsubmit="uploadImagem(event, ${p.id})" id="upload-form-${p.id}">
-              <label class="admin-btn" style="font-size:10px;padding:6px 8px;cursor:pointer;background:var(--cinza-700)">
-                Upload
+              <label class="admin-btn" style="font-size:10px;padding:4px 6px;cursor:pointer;background:var(--cinza-700)">
+                UP
                 <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none" onchange="document.getElementById('upload-form-${p.id}').requestSubmit()">
               </label>
             </form>
+            <button class="admin-btn" style="font-size:10px;padding:4px 6px;background:var(--laranja-800)" onclick="toggleProduto(${p.id})">${p.ativo ? 'Desat.' : 'Ativar'}</button>
           </div>
         </div>
       `).join('');
+    }
+
+    async function toggleProduto(id) {
+      const data = await api('/api/admin/produtos/' + id + '/ativo', 'PATCH');
+      if (data && data.success) {
+        gerenciarProdutos();
+      }
+    }
+
+    async function salvarProduto(id) {
+      const nome = document.getElementById('prod-nome-' + id).value.trim();
+      const tipo = document.getElementById('prod-tipo-' + id).value;
+      const item_nome = document.getElementById('prod-item-' + id).value.trim() || null;
+      const item_quantidade = parseInt(document.getElementById('prod-qtd-' + id).value) || 1;
+      const preco = parseFloat(document.getElementById('prod-preco-' + id).value);
+      if (!nome || !preco) return alerta('Nome e preco obrigatorios', 'error');
+      const data = await api('/api/admin/produtos/' + id, 'PATCH', { nome, tipo, item_nome, item_quantidade, preco });
+      if (data && data.success) {
+        alerta('Produto salvo!', 'success');
+        gerenciarProdutos();
+      }
+    }
+
+    async function criarProduto() {
+      const nome = document.getElementById('novo-nome').value.trim();
+      const tipo = document.getElementById('novo-tipo').value;
+      const item_nome = document.getElementById('novo-item').value.trim() || null;
+      const item_quantidade = parseInt(document.getElementById('novo-qtd').value) || 1;
+      const preco = parseFloat(document.getElementById('novo-preco').value);
+      if (!nome || !preco) return alerta('Nome e preco obrigatorios', 'error');
+      const data = await api('/api/admin/produtos', 'POST', { nome, tipo, item_nome, item_quantidade, preco });
+      if (data && data.success) {
+        alerta('Produto criado!', 'success');
+        document.getElementById('novo-nome').value = '';
+        document.getElementById('novo-item').value = '';
+        document.getElementById('novo-preco').value = '';
+        gerenciarProdutos();
+      }
     }
 
     async function salvarImagemUrl(produtoId) {
