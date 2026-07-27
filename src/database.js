@@ -78,7 +78,6 @@ async function init() {
   try { db.run("ALTER TABLE pedidos ADD COLUMN subtotal_centavos INTEGER"); } catch (e) {}
   try { db.run("ALTER TABLE pedidos ADD COLUMN incremento_centavos INTEGER DEFAULT 0"); } catch (e) {}
   try { db.run("ALTER TABLE pedidos ADD COLUMN expira_em TEXT"); } catch (e) {}
-  try { db.run("ALTER TABLE keys_emitidas ADD COLUMN expira_em TEXT"); } catch (e) {}
 
   salvar();
   return db;
@@ -203,16 +202,14 @@ function listarTodosPedidos(page = 1, limit = 50) {
 }
 
 function registrarKey({ key, produto_id, pedido_id, tipo, dados }) {
-  const EXP = parseInt(process.env.ORDER_EXPIRATION_MINUTES) || 1440;
-  const expiraEm = new Date(Date.now() + EXP * 60 * 1000).toISOString().replace('T', ' ').replace('Z', '');
-  const stmt = db.prepare('INSERT INTO keys_emitidas (key, produto_id, pedido_id, tipo, dados, expira_em) VALUES (?, ?, ?, ?, ?, ?)');
-  stmt.run([key, produto_id, pedido_id, tipo, dados, expiraEm]);
+  const stmt = db.prepare('INSERT INTO keys_emitidas (key, produto_id, pedido_id, tipo, dados) VALUES (?, ?, ?, ?, ?)');
+  stmt.run([key, produto_id, pedido_id, tipo, dados]);
   stmt.free();
   atualizarPedido(pedido_id, { chave_gerada: key, status: 'concluido' });
 }
 
 function buscarKey(key) {
-  const stmt = db.prepare("SELECT * FROM keys_emitidas WHERE key = ? AND (expira_em IS NULL OR datetime(expira_em) > datetime('now'))");
+  const stmt = db.prepare('SELECT * FROM keys_emitidas WHERE key = ?');
   stmt.bind([key]);
   if (stmt.step()) { const r = stmt.getAsObject(); stmt.free(); return r; }
   stmt.free();
