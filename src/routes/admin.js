@@ -116,24 +116,25 @@ router.post('/confirmar-pagamento', async (req, res) => {
         const https = require('https');
         const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
         if (webhookUrl) {
-          const url = new URL(webhookUrl);
-          const payload = JSON.stringify({
-            embeds: [{
-              title: 'VENDA CONCLUIDA',
-              color: 16091611,
-              fields: [
-                { name: 'Comprador', value: pedido.usuario_nome || 'N/A', inline: false },
-                { name: 'Produto', value: pedido.produto_nome, inline: true },
-                { name: 'Chave', value: chave, inline: true },
-                { name: 'Pedido #', value: pedido.pedido_numero, inline: true }
-              ],
-              footer: { text: 'Loja Bela Vista Roleplay' },
-              timestamp: new Date().toISOString()
-            }]
-          });
-          const req2 = https.request({ hostname: url.hostname, path: url.pathname, method: 'POST', headers: { 'Content-Type': 'application/json' } });
-          req2.write(payload);
-          req2.end();
+          try {
+            const url = new URL(webhookUrl);
+            const payload = JSON.stringify({
+              embeds: [{
+                title: 'PEDIDO ACEITO',
+                color: 5814783,
+                fields: [
+                  { name: 'Cliente', value: pedido.usuario_nome || 'N/A', inline: true },
+                  { name: 'Produto', value: pedido.produto_nome + (pedido.item_quantidade > 1 ? ' x' + pedido.item_quantidade : ''), inline: true },
+                  { name: 'Pedido #', value: pedido.pedido_numero, inline: true }
+                ],
+                footer: { text: 'Loja Bela Vista Roleplay' },
+                timestamp: new Date().toISOString()
+              }]
+            });
+            const req2 = https.request({ hostname: url.hostname, path: url.pathname, method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            req2.write(payload);
+            req2.end();
+          } catch (e) {}
         }
 
         console.log(`[ADMIN] Pagamento confirmado! Key: ${chave} - ${pedido.produto_nome}`);
@@ -160,6 +161,30 @@ router.post('/cancelar-pedido', (req, res) => {
   }
   db.atualizarPedido(pedido_id, { status: 'cancelado', chave_gerada: null });
   res.json({ success: true });
+
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (webhookUrl) {
+    try {
+      const https = require('https');
+      const url = new URL(webhookUrl);
+      const payload = JSON.stringify({
+        embeds: [{
+          title: 'PEDIDO RECUSADO',
+          color: 15548997,
+          fields: [
+            { name: 'Cliente', value: pedido.usuario_nome || 'N/A', inline: true },
+            { name: 'Produto', value: pedido.produto_nome + (pedido.item_quantidade > 1 ? ' x' + pedido.item_quantidade : ''), inline: true },
+            { name: 'Pedido #', value: pedido.pedido_numero, inline: true }
+          ],
+          footer: { text: 'Loja Bela Vista Roleplay' },
+          timestamp: new Date().toISOString()
+        }]
+      });
+      const req2 = https.request({ hostname: url.hostname, path: url.pathname, method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      req2.write(payload);
+      req2.end();
+    } catch (e) {}
+  }
 });
 
 router.post('/excluir-pedido', (req, res) => {
@@ -221,6 +246,29 @@ router.post('/usar-chave', (req, res) => {
     quantidade: dados.amount || dados.quantidade || 1,
     item_nome: dados.item || dados.car || null
   });
+
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (webhookUrl) {
+    try {
+      const https = require('https');
+      const url = new URL(webhookUrl);
+      const payload = JSON.stringify({
+        embeds: [{
+          title: 'KEY UTILIZADA',
+          color: 16753920,
+          fields: [
+            { name: 'Tipo', value: dados.tipo, inline: true },
+            { name: 'Item', value: dados.item || dados.car || (dados.amount ? 'R$ ' + dados.amount : 'Desconhecido'), inline: true }
+          ],
+          footer: { text: 'Loja Bela Vista Roleplay' },
+          timestamp: new Date().toISOString()
+        }]
+      });
+      const req2 = https.request({ hostname: url.hostname, path: url.pathname, method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      req2.write(payload);
+      req2.end();
+    } catch (e) {}
+  }
 });
 
 router.post('/gerar-key', async (req, res) => {
