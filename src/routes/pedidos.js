@@ -80,6 +80,7 @@ router.post('/', async (req, res) => {
       valor_final: valorFinal,
       incremento_centavos: incrementoCentavos,
       expira_em: expiraEm,
+      imagem_url: produto.imagem_url || '',
       pix: {
         chave: pixKey,
         tipo: pixKeyType,
@@ -113,6 +114,8 @@ router.get('/:numero', (req, res) => {
     return res.status(403).json({ error: 'Email nao confere com o pedido', precisa_email: true });
   }
 
+  const todos = db.listarTodosProdutos();
+  const prod = todos.find(p => p.id === pedido.produto_id);
   res.json({
     pedido: {
       id: pedido.id,
@@ -126,6 +129,7 @@ router.get('/:numero', (req, res) => {
       chave: pedido.chave_gerada || null,
       criado_em: pedido.criado_em,
       expira_em: pedido.expira_em,
+      imagem_url: prod ? prod.imagem_url : '',
       pix: pedido.status === 'pendente' ? {
         chave: process.env.PIX_KEY || 'sua-chave-pix-aqui',
         tipo: process.env.PIX_KEY_TYPE || 'aleatoria',

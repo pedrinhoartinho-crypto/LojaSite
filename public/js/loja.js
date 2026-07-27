@@ -127,7 +127,10 @@ function abrirCompra(produtoId) {
           <div style="font-size:40px;margin-bottom:10px">🧾</div>
           <h2 style="color:var(--laranja-500);margin-bottom:5px">Pagamento via Pix</h2>
           <p style="color:var(--cinza-200);font-size:13px;margin-bottom:5px">Pedido #${data.pedido_numero}</p>
-          <p style="color:var(--cinza-200);font-size:13px;margin-bottom:15px">${data.produto} ${data.tipo === 'armas' ? 'x' + data.quantidade : ''}</p>
+          <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:15px">
+            ${data.imagem_url ? `<img src="${data.imagem_url}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">` : ''}
+            <p style="color:var(--cinza-200);font-size:13px">${data.produto} ${data.tipo === 'armas' ? 'x' + data.quantidade : ''}</p>
+          </div>
 
           <div style="background:var(--cinza-800);border:2px dashed var(--laranja-600);border-radius:12px;padding:20px;margin:15px 0">
             <p style="color:var(--cinza-200);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Pague exatamente</p>
@@ -356,7 +359,10 @@ async function buscarPedido(numero, isModal = false) {
         <div class="pedido-status ${statusClass}">${statusText}</div>
 
         <div class="pedido-detalhes">
-          <p><span>Produto</span><span>${p.produto} ${p.quantidade > 1 ? 'x' + p.quantidade : ''}</span></p>
+          <p><span>Produto</span><span>
+            ${p.imagem_url ? `<img src="${p.imagem_url}" style="width:24px;height:24px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:6px">` : ''}
+            ${p.produto} ${p.quantidade > 1 ? 'x' + p.quantidade : ''}
+          </span></p>
           <p><span>Valor</span><span>R$ ${parseFloat(p.valor_final || p.valor).toFixed(2)}</span></p>
           <p><span>Data</span><span>${new Date(p.criado_em + 'Z').toLocaleString('pt-BR')}</span></p>
         </div>
