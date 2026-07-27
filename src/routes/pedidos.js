@@ -118,7 +118,7 @@ router.post('/', async (req, res) => {
               { name: 'Cliente', value: usuario_nome || 'N/A', inline: true },
               { name: 'Email', value: usuario_email, inline: true },
               { name: 'Produto', value: produto.nome + (qtd > 1 ? ' x' + qtd : ''), inline: true },
-              { name: 'Valor', value: 'R$ ' + valorFinal.toFixed(2), inline: true },
+              { name: 'Valor', value: 'R$ ' + valorComDesconto.toFixed(2) + (descontoPercentual ? ' (' + descontoPercentual + '% off)' : ''), inline: true },
               { name: 'Pedido #', value: pedidoNumero, inline: true },
               { name: 'Status', value: 'Aguardando pagamento', inline: true }
             ],
