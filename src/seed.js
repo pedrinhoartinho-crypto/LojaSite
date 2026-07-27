@@ -69,7 +69,7 @@ async function seedDatabase() {
   `);
 
   for (const p of produtos) {
-    stmt.run([p.nome, p.descricao, p.tipo, p.item_nome || null, p.item_quantidade || 1, p.preco, '']);
+    stmt.run([p.nome, p.descricao, p.tipo, p.item_nome || null, p.item_quantidade || 1, p.preco, p.imagem_url || '']);
   }
   stmt.free();
 
