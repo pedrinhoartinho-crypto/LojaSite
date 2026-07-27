@@ -79,6 +79,7 @@
         <button class="admin-btn secondary" onclick="carregarPendentes()" style="font-size:11px">Pendentes</button>
         <button class="admin-btn secondary" onclick="gerenciarProdutos()" style="font-size:11px">Produtos</button>
         <button class="admin-btn secondary" onclick="mostrarGerarKey()" style="font-size:11px">Gerar Key</button>
+        <button class="admin-btn secondary" onclick="mostrarCodigos()" style="font-size:11px">Cupons</button>
       </div>
 
       <div id="admin-produtos" style="display:none;margin-bottom:20px">
@@ -97,6 +98,17 @@
           <button class="admin-btn" style="font-size:12px;padding:6px 16px" onclick="criarProduto()">Criar</button>
         </div>
         <div id="produtos-lista"></div>
+      </div>
+
+      <div id="admin-codigos" style="display:none;margin-bottom:20px">
+        <h3 style="color:var(--laranja-500);margin-bottom:15px">Codigos Promocionais</h3>
+        <div style="background:var(--cinza-800);border:1px solid var(--laranja-700);border-radius:8px;padding:12px 15px;margin-bottom:15px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="color:var(--laranja-400);font-size:13px;font-weight:600">Novo Cupom:</span>
+          <input type="text" id="novo-codigo" placeholder="CUPOM10" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:6px 10px;border-radius:6px;font-size:12px;width:130px;text-transform:uppercase">
+          <input type="number" id="novo-desconto" placeholder="Desconto %" min="1" max="100" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:6px 10px;border-radius:6px;font-size:12px;width:80px">
+          <button class="admin-btn" style="font-size:12px;padding:6px 16px" onclick="criarCodigo()">Criar</button>
+        </div>
+        <div id="codigos-lista"></div>
       </div>
 
       <div id="admin-gerar-key" style="display:none;margin-bottom:20px">
@@ -400,6 +412,52 @@
       navigator.clipboard?.writeText(ultimaKeyGerada);
       const btn = event?.target;
       if (btn) { const t = btn.textContent; btn.textContent = 'Copiado!'; setTimeout(() => btn.textContent = t, 2000); }
+    }
+
+    async function mostrarCodigos() {
+      document.getElementById('admin-tabela').style.display = 'none';
+      document.getElementById('admin-pagination').style.display = 'none';
+      document.getElementById('admin-produtos').style.display = 'none';
+      document.getElementById('admin-gerar-key').style.display = 'none';
+      document.getElementById('admin-codigos').style.display = 'block';
+
+      const data = await api('/api/admin/codigos');
+      if (!data || !data.codigos) return;
+      const div = document.getElementById('codigos-lista');
+      if (data.codigos.length === 0) {
+        div.innerHTML = '<p style="color:var(--cinza-400);font-size:13px">Nenhum codigo cadastrado.</p>';
+        return;
+      }
+      div.innerHTML = data.codigos.map(c => `
+        <div style="background:var(--cinza-800);border:1px solid ${c.ativo ? 'var(--cinza-700)' : 'var(--laranja-900)'};border-radius:8px;padding:12px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px;opacity:${c.ativo ? 1 : 0.5}">
+          <div style="flex:1">
+            <span style="color:var(--laranja-500);font-weight:700;font-size:16px">${c.codigo}</span>
+            <span style="color:var(--cinza-200);font-size:13px;margin-left:10px">${c.desconto_percentual}% OFF</span>
+          </div>
+          <button class="admin-btn" style="font-size:10px;padding:4px 8px;background:var(--laranja-800)" onclick="toggleCodigo(${c.id})">${c.ativo ? 'Desat.' : 'Ativar'}</button>
+        </div>
+      `).join('');
+    }
+
+    async function toggleCodigo(id) {
+      const data = await api('/api/admin/codigos/' + id + '/ativo', 'PATCH');
+      if (data && data.success) mostrarCodigos();
+    }
+
+    async function criarCodigo() {
+      const codigo = document.getElementById('novo-codigo').value.trim().toUpperCase();
+      const desconto = parseInt(document.getElementById('novo-desconto').value);
+      if (!codigo || !desconto) return alerta('Preencha codigo e desconto', 'error');
+      if (desconto < 1 || desconto > 100) return alerta('Desconto deve ser entre 1 e 100', 'error');
+      const data = await api('/api/admin/codigos', 'POST', { codigo, desconto });
+      if (data && data.success) {
+        alerta('Codigo criado!', 'success');
+        document.getElementById('novo-codigo').value = '';
+        document.getElementById('novo-desconto').value = '';
+        mostrarCodigos();
+      } else {
+        alerta('Erro: ' + (data?.error || 'desconhecido'), 'error');
+      }
     }
 
     async function uploadImagem(event, produtoId) {

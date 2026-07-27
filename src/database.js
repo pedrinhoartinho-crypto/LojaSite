@@ -70,6 +70,16 @@ async function init() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS codigos_promocionais (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      codigo TEXT NOT NULL UNIQUE,
+      desconto_percentual INTEGER NOT NULL CHECK(desconto_percentual > 0 AND desconto_percentual <= 100),
+      ativo INTEGER NOT NULL DEFAULT 1,
+      criado_em TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   db.run('CREATE INDEX IF NOT EXISTS idx_pedidos_status ON pedidos(status)');
   db.run('CREATE INDEX IF NOT EXISTS idx_pedidos_gateway ON pedidos(gateway_transacao_id)');
   db.run('CREATE INDEX IF NOT EXISTS idx_keys_key ON keys_emitidas(key)');
@@ -78,6 +88,8 @@ async function init() {
   try { db.run("ALTER TABLE pedidos ADD COLUMN subtotal_centavos INTEGER"); } catch (e) {}
   try { db.run("ALTER TABLE pedidos ADD COLUMN incremento_centavos INTEGER DEFAULT 0"); } catch (e) {}
   try { db.run("ALTER TABLE pedidos ADD COLUMN expira_em TEXT"); } catch (e) {}
+  try { db.run("ALTER TABLE pedidos ADD COLUMN desconto_percentual INTEGER DEFAULT 0"); } catch (e) {}
+  try { db.run("ALTER TABLE pedidos ADD COLUMN codigo_usado TEXT"); } catch (e) {}
 
   salvar();
   return db;
@@ -105,12 +117,12 @@ function buscarProduto(id) {
   return null;
 }
 
-function criarPedido({ usuario_nome, usuario_email, produto_id, produto_nome, produto_tipo, item_nome, item_quantidade, valor, pedido_numero, subtotal_centavos, incremento_centavos, valor_final, expira_em }) {
+function criarPedido({ usuario_nome, usuario_email, produto_id, produto_nome, produto_tipo, item_nome, item_quantidade, valor, pedido_numero, subtotal_centavos, incremento_centavos, valor_final, expira_em, desconto_percentual, codigo_usado }) {
   const stmt = db.prepare(`
-    INSERT INTO pedidos (usuario_nome, usuario_email, produto_id, produto_nome, produto_tipo, item_nome, item_quantidade, valor, pedido_numero, subtotal_centavos, incremento_centavos, valor_final, expira_em)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO pedidos (usuario_nome, usuario_email, produto_id, produto_nome, produto_tipo, item_nome, item_quantidade, valor, pedido_numero, subtotal_centavos, incremento_centavos, valor_final, expira_em, desconto_percentual, codigo_usado)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  stmt.run([usuario_nome, usuario_email, produto_id, produto_nome, produto_tipo, item_nome || null, item_quantidade || 1, valor, pedido_numero, subtotal_centavos || null, incremento_centavos || 0, valor_final || valor, expira_em || null]);
+  stmt.run([usuario_nome, usuario_email, produto_id, produto_nome, produto_tipo, item_nome || null, item_quantidade || 1, valor, pedido_numero, subtotal_centavos || null, incremento_centavos || 0, valor_final || valor, expira_em || null, desconto_percentual || 0, codigo_usado || null]);
   stmt.free();
   const id = db.exec("SELECT last_insert_rowid() as id")[0].values[0][0];
   salvar();
@@ -238,6 +250,38 @@ function toggleProdutoAtivo(id) {
   salvar();
 }
 
+function listarCodigos() {
+  const stmt = db.prepare('SELECT * FROM codigos_promocionais ORDER BY criado_em DESC');
+  const rows = [];
+  while (stmt.step()) rows.push(stmt.getAsObject());
+  stmt.free();
+  return rows;
+}
+
+function buscarCodigo(codigo) {
+  const stmt = db.prepare("SELECT * FROM codigos_promocionais WHERE codigo = ? AND ativo = 1");
+  stmt.bind([codigo.toUpperCase()]);
+  if (stmt.step()) { const r = stmt.getAsObject(); stmt.free(); return r; }
+  stmt.free();
+  return null;
+}
+
+function criarCodigo(codigo, desconto) {
+  const stmt = db.prepare('INSERT INTO codigos_promocionais (codigo, desconto_percentual) VALUES (?, ?)');
+  stmt.run([codigo.toUpperCase(), desconto]);
+  stmt.free();
+  const id = db.exec("SELECT last_insert_rowid() as id")[0].values[0][0];
+  salvar();
+  return id;
+}
+
+function toggleCodigoAtivo(id) {
+  const stmt = db.prepare('UPDATE codigos_promocionais SET ativo = CASE WHEN ativo = 1 THEN 0 ELSE 1 END WHERE id = ?');
+  stmt.run([id]);
+  stmt.free();
+  salvar();
+}
+
 module.exports = {
   get db() { return db; },
   init,
@@ -257,5 +301,9 @@ module.exports = {
   buscarKey,
   marcarKeyUsada,
   listarTodosProdutos,
-  toggleProdutoAtivo
+  toggleProdutoAtivo,
+  listarCodigos,
+  buscarCodigo,
+  criarCodigo,
+  toggleCodigoAtivo
 };

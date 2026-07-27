@@ -271,6 +271,27 @@ router.post('/usar-chave', (req, res) => {
   }
 });
 
+router.get('/codigos', (req, res) => {
+  res.json({ codigos: db.listarCodigos() });
+});
+
+router.post('/codigos', (req, res) => {
+  const { codigo, desconto } = req.body;
+  if (!codigo || !desconto) return res.status(400).json({ error: 'codigo e desconto obrigatorios' });
+  if (desconto < 1 || desconto > 100) return res.status(400).json({ error: 'desconto deve ser entre 1 e 100' });
+  try {
+    const id = db.criarCodigo(codigo, desconto);
+    res.json({ success: true, id });
+  } catch (e) {
+    res.status(400).json({ error: 'Codigo ja existe' });
+  }
+});
+
+router.patch('/codigos/:id/ativo', (req, res) => {
+  db.toggleCodigoAtivo(req.params.id);
+  res.json({ success: true });
+});
+
 router.post('/gerar-key', async (req, res) => {
   try {
     const { produto_id, quantidade } = req.body;

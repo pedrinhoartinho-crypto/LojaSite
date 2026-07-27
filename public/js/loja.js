@@ -80,6 +80,8 @@ function abrirCompra(produtoId) {
       <label>Seu Email *</label>
       <input type="email" id="input-email" placeholder="seu@email.com" required>
       ${qtdHtml}
+      <label style="margin-top:5px">Codigo Promocional (opcional)</label>
+      <input type="text" id="input-codigo" placeholder="CUPOM10" maxlength="20" style="text-transform:uppercase">
       <div class="erro-msg" id="erro-email">Email invalido</div>
       <button type="submit" class="modal-btn" id="btn-comprar">Gerar Pagamento</button>
     </form>
@@ -101,6 +103,8 @@ function abrirCompra(produtoId) {
       return;
     }
 
+    const codigo = document.getElementById('input-codigo').value.trim().toUpperCase() || undefined;
+
     btn.disabled = true;
     btn.textContent = 'Processando...';
 
@@ -108,7 +112,7 @@ function abrirCompra(produtoId) {
       const res = await fetch('/api/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ produto_id: produtoId, usuario_nome: nome, usuario_email: email, quantidade: qtd })
+        body: JSON.stringify({ produto_id: produtoId, usuario_nome: nome, usuario_email: email, quantidade: qtd, codigo })
       });
 
       const data = await res.json();
@@ -136,6 +140,7 @@ function abrirCompra(produtoId) {
             <p style="color:var(--cinza-200);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Pague exatamente</p>
             <p style="font-size:36px;font-weight:900;color:var(--laranja-500);letter-spacing:2px">R$ ${data.valor_final.toFixed(2)}</p>
             <p style="color:var(--laranja-300);font-size:13px;margin-top:5px">Incremento: +R$ 0,${String(data.incremento_centavos).padStart(2, '0')}</p>
+            ${data.desconto ? `<p style="color:#00c853;font-size:12px;margin-top:5px">Desconto de ${data.desconto}% aplicado!</p>` : ''}
           </div>
 
           <div style="background:var(--cinza-900);border:1px solid var(--cinza-700);border-radius:8px;padding:15px;margin:10px 0;text-align:left">

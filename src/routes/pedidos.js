@@ -33,7 +33,7 @@ async function calcularValorFinal(subtotal) {
 
 router.post('/', async (req, res) => {
   try {
-    const { produto_id, usuario_nome, usuario_email, quantidade } = req.body;
+    const { produto_id, usuario_nome, usuario_email, quantidade, codigo } = req.body;
 
     if (!produto_id) return res.status(400).json({ error: 'produto_id obrigatorio' });
     if (!usuario_email) return res.status(400).json({ error: 'usuario_email obrigatorio' });
@@ -45,6 +45,20 @@ router.post('/', async (req, res) => {
     const subtotal = produto.preco * qtd;
 
     const { valorFinal, incrementoCentavos, centavosBase } = await calcularValorFinal(subtotal);
+
+    let descontoPercentual = 0;
+    let codigoUsado = null;
+    if (codigo) {
+      const cod = db.buscarCodigo(codigo);
+      if (cod) {
+        descontoPercentual = cod.desconto_percentual;
+        codigoUsado = cod.codigo;
+      }
+    }
+
+    const valorComDesconto = descontoPercentual > 0
+      ? Math.round((subtotal + incrementoCentavos / 100) * (1 - descontoPercentual / 100) * 100) / 100
+      : valorFinal;
 
     const pedidoNumero = uuidv4().slice(0, 8).toUpperCase();
     const expiraEm = new Date(Date.now() + EXPIRATION_MINUTES * 60 * 1000).toISOString().replace('T', ' ').replace('Z', '');
@@ -58,11 +72,13 @@ router.post('/', async (req, res) => {
       item_nome: produto.item_nome,
       item_quantidade: qtd,
       valor: subtotal,
-      valor_final: valorFinal,
+      valor_final: valorComDesconto,
       subtotal_centavos: centavosBase,
       incremento_centavos: incrementoCentavos,
       pedido_numero: pedidoNumero,
-      expira_em: expiraEm
+      expira_em: expiraEm,
+      desconto_percentual: descontoPercentual,
+      codigo_usado: codigoUsado
     });
 
     const pixKey = process.env.PIX_KEY || 'sua-chave-pix-aqui';
@@ -77,8 +93,9 @@ router.post('/', async (req, res) => {
       tipo: produto.tipo,
       quantidade: qtd,
       subtotal: subtotal,
-      valor_final: valorFinal,
+      valor_final: valorComDesconto,
       incremento_centavos: incrementoCentavos,
+      desconto: descontoPercentual || undefined,
       expira_em: expiraEm,
       imagem_url: produto.imagem_url || '',
       pix: {
