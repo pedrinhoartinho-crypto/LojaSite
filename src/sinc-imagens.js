@@ -1,4 +1,4 @@
-const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const initSqlJs = require('sql.js');
@@ -19,7 +19,7 @@ async function request(method, urlPath, body) {
         'Content-Type': 'application/json'
       }
     };
-    const req = http.request(opts, res => {
+    const req = https.request(opts, res => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
@@ -35,32 +35,37 @@ async function request(method, urlPath, body) {
 async function main() {
   const SQL = await initSqlJs();
   const buffer = fs.readFileSync(DB_PATH);
-  const db = new SQL.Database(buffer);
+  const localDb = new SQL.Database(buffer);
 
-  const stmt = db.prepare('SELECT id, nome, imagem_url FROM produtos WHERE imagem_url != ""');
-  const produtos = [];
-  while (stmt.step()) produtos.push(stmt.getAsObject());
+  const stmt = localDb.prepare('SELECT id, nome, imagem_url FROM produtos WHERE imagem_url != ""');
+  const locais = [];
+  while (stmt.step()) locais.push(stmt.getAsObject());
   stmt.free();
-  db.close();
+  localDb.close();
 
-  console.log('Produtos com imagem no banco local:', produtos.length);
+  const data = await request('GET', '/api/admin/produtos');
+  const remotos = data.produtos;
 
-  for (const p of produtos) {
-    const fileName = path.basename(p.imagem_url);
+  console.log('Locais com imagem:', locais.length, '| Render:', remotos.length, 'produtos');
+
+  for (const l of locais) {
+    const fileName = path.basename(l.imagem_url);
     const localFile = path.join(__dirname, '..', 'public', 'uploads', fileName);
     if (!fs.existsSync(localFile)) {
-      console.log('  [' + p.id + '] ' + p.nome + ' -> imagem nao encontrada: ' + fileName);
+      console.log('  ' + l.nome + ' -> imagem nao encontrada: ' + fileName);
+      continue;
+    }
+
+    const r = remotos.find(p => p.nome === l.nome);
+    if (!r) {
+      console.log('  ' + l.nome + ' -> nao encontrado no Render');
       continue;
     }
 
     const imgUrl = '/uploads/' + fileName;
-    console.log('  [' + p.id + '] ' + p.nome + ' -> ' + imgUrl);
-    const result = await request('PATCH', '/api/admin/produtos/' + p.id, { imagem_url: imgUrl });
-    if (result.success) {
-      console.log('    OK');
-    } else {
-      console.log('    ERRO: ' + JSON.stringify(result));
-    }
+    console.log('  [' + r.id + '] ' + l.nome + ' -> ' + imgUrl);
+    const result = await request('PATCH', '/api/admin/produtos/' + r.id, { imagem_url: imgUrl });
+    console.log('    ' + (result.success ? 'OK' : 'ERRO: ' + JSON.stringify(result)));
   }
 
   console.log('Finalizado!');
