@@ -103,9 +103,13 @@
         <h3 style="color:var(--laranja-500);margin-bottom:15px">Gerar Key Manual</h3>
         <div style="background:var(--cinza-800);border:1px solid var(--laranja-700);border-radius:8px;padding:15px">
           <p style="color:var(--cinza-200);font-size:13px;margin-bottom:12px">Selecione um produto e gere uma key para usar no jogo.</p>
-          <select id="select-produto-key" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:8px 12px;border-radius:6px;font-size:13px;width:100%;margin-bottom:12px">
+          <select id="select-produto-key" onchange="mostrarQtdKey()" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:8px 12px;border-radius:6px;font-size:13px;width:100%;margin-bottom:12px">
             <option value="">Carregando produtos...</option>
           </select>
+          <div id="qtd-key-div" style="display:none;margin-bottom:12px">
+            <label style="color:var(--cinza-200);font-size:12px;display:block;margin-bottom:4px">Quantidade:</label>
+            <input type="number" id="input-qtd-key" value="1" min="1" max="99" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:8px 12px;border-radius:6px;font-size:13px;width:80px">
+          </div>
           <button class="admin-btn" onclick="gerarKeyAdmin()" style="font-size:12px;padding:8px 20px">Gerar Key</button>
           <div id="resultado-key" style="display:none;margin-top:15px;background:var(--cinza-900);border:1px solid var(--laranja-600);border-radius:8px;padding:15px;text-align:center">
             <p style="color:var(--cinza-400);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Key gerada</p>
@@ -352,6 +356,13 @@
 
     let ultimaKeyGerada = '';
 
+    function mostrarQtdKey() {
+      const sel = document.getElementById('select-produto-key');
+      const opt = sel.options[sel.selectedIndex];
+      const tipo = opt?.getAttribute('data-tipo') || '';
+      document.getElementById('qtd-key-div').style.display = tipo === 'armas' ? 'block' : 'none';
+    }
+
     async function mostrarGerarKey() {
       document.getElementById('admin-tabela').style.display = 'none';
       document.getElementById('admin-pagination').style.display = 'none';
@@ -364,7 +375,7 @@
       const sel = document.getElementById('select-produto-key');
       sel.innerHTML = '<option value="">Selecione um produto</option>' +
         data.produtos.filter(p => p.ativo).map(p =>
-          `<option value="${p.id}">${p.nome} - R$ ${p.preco.toFixed(2)} (${p.tipo})</option>`
+          `<option value="${p.id}" data-tipo="${p.tipo}">${p.nome} - R$ ${p.preco.toFixed(2)} (${p.tipo})</option>`
         ).join('');
     }
 
@@ -372,12 +383,13 @@
       const sel = document.getElementById('select-produto-key');
       const id = parseInt(sel.value);
       if (!id) { alerta('Selecione um produto', 'error'); return; }
-      const data = await api('/api/admin/gerar-key', 'POST', { produto_id: id });
+      const qtd = parseInt(document.getElementById('input-qtd-key').value) || 1;
+      const data = await api('/api/admin/gerar-key', 'POST', { produto_id: id, quantidade: qtd });
       if (data && data.chave) {
         ultimaKeyGerada = data.chave;
         document.getElementById('resultado-key').style.display = 'block';
         document.getElementById('texto-key').textContent = data.chave;
-        document.getElementById('produto-key').textContent = data.produto;
+        document.getElementById('produto-key').textContent = data.produto + (qtd > 1 ? ' x' + qtd : '');
       } else {
         alerta('Erro: ' + (data?.error || 'desconhecido'), 'error');
       }

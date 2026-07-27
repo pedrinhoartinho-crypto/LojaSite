@@ -225,18 +225,20 @@ router.post('/usar-chave', (req, res) => {
 
 router.post('/gerar-key', async (req, res) => {
   try {
-    const { produto_id } = req.body;
+    const { produto_id, quantidade } = req.body;
     if (!produto_id) return res.status(400).json({ error: 'produto_id obrigatorio' });
 
     const all = db.listarTodosProdutos();
     const produto = all.find(p => p.id == produto_id);
     if (!produto) return res.status(404).json({ error: 'Produto nao encontrado' });
 
+    const qtd = produto.tipo === 'armas' ? (parseInt(quantidade) || produto.item_quantidade || 1) : produto.item_quantidade || 1;
+
     const premio = produto.tipo === 'dinheiro'
-      ? { tipo: 'dinheiro', amount: produto.item_quantidade }
+      ? { tipo: 'dinheiro', amount: qtd }
       : produto.tipo === 'armas'
-      ? { tipo: 'armas', item: produto.item_nome, quantidade: produto.item_quantidade || 1 }
-      : { tipo: 'carros', car: produto.item_nome, quantidade: produto.item_quantidade || 1 };
+      ? { tipo: 'armas', item: produto.item_nome, quantidade: qtd }
+      : { tipo: 'carros', car: produto.item_nome, quantidade: qtd };
 
     const chave = await opencloud.gerarEGravarKey(premio);
 
