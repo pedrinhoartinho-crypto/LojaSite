@@ -87,6 +87,33 @@ router.post('/', async (req, res) => {
         recebedor: receiverName
       }
     });
+
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+    if (webhookUrl) {
+      const https = require('https');
+      try {
+        const url = new URL(webhookUrl);
+        const payload = JSON.stringify({
+          embeds: [{
+            title: 'NOVO PEDIDO',
+            color: 15105570,
+            fields: [
+              { name: 'Cliente', value: usuario_nome || 'N/A', inline: true },
+              { name: 'Email', value: usuario_email, inline: true },
+              { name: 'Produto', value: produto.nome + (qtd > 1 ? ' x' + qtd : ''), inline: true },
+              { name: 'Valor', value: 'R$ ' + valorFinal.toFixed(2), inline: true },
+              { name: 'Pedido #', value: pedidoNumero, inline: true },
+              { name: 'Status', value: 'Aguardando pagamento', inline: true }
+            ],
+            footer: { text: 'Loja Bela Vista Roleplay' },
+            timestamp: new Date().toISOString()
+          }]
+        });
+        const req2 = https.request({ hostname: url.hostname, path: url.pathname, method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        req2.write(payload);
+        req2.end();
+      } catch (e) {}
+    }
   } catch (e) {
     console.error('[PEDIDOS] Erro:', e);
     res.status(500).json({ error: e.message || 'Erro interno' });
