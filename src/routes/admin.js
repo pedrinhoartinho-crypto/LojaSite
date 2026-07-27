@@ -223,6 +223,37 @@ router.post('/usar-chave', (req, res) => {
   });
 });
 
+router.post('/gerar-key', async (req, res) => {
+  try {
+    const { produto_id } = req.body;
+    if (!produto_id) return res.status(400).json({ error: 'produto_id obrigatorio' });
+
+    const all = db.listarTodosProdutos();
+    const produto = all.find(p => p.id == produto_id);
+    if (!produto) return res.status(404).json({ error: 'Produto nao encontrado' });
+
+    const premio = produto.tipo === 'dinheiro'
+      ? { tipo: 'dinheiro', amount: produto.item_quantidade }
+      : produto.tipo === 'armas'
+      ? { tipo: 'armas', item: produto.item_nome, quantidade: produto.item_quantidade || 1 }
+      : { tipo: 'carros', car: produto.item_nome, quantidade: produto.item_quantidade || 1 };
+
+    const chave = await opencloud.gerarEGravarKey(premio);
+
+    db.registrarKey({
+      key: chave,
+      produto_id: produto.id,
+      pedido_id: 0,
+      tipo: produto.tipo,
+      dados: JSON.stringify(premio)
+    });
+
+    res.json({ success: true, chave, produto: produto.nome });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.get('/produtos', (req, res) => {
   const produtos = db.listarTodosProdutos();
   res.json({ produtos });

@@ -280,6 +280,7 @@
               </label>
             </form>
             <button class="admin-btn" style="font-size:10px;padding:4px 6px;background:var(--laranja-800)" onclick="toggleProduto(${p.id})">${p.ativo ? 'Desat.' : 'Ativar'}</button>
+            <button class="admin-btn" style="font-size:10px;padding:4px 6px;background:green" onclick="gerarKeyAdmin(${p.id})">🔑 Key</button>
           </div>
         </div>
       `).join('');
@@ -329,6 +330,15 @@
       if (data && data.success) {
         alerta('Imagem atualizada!', 'success');
         gerenciarProdutos();
+      }
+    }
+
+    async function gerarKeyAdmin(produtoId) {
+      const data = await api('/api/admin/gerar-key', 'POST', { produto_id: produtoId });
+      if (data && data.chave) {
+        alerta('Key gerada: ' + data.chave + ' (' + data.produto + ')', 'success');
+      } else {
+        alerta('Erro: ' + (data?.error || 'desconhecido'), 'error');
       }
     }
 
