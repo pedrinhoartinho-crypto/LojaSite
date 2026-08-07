@@ -80,6 +80,13 @@ async function init() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS config (
+      chave TEXT PRIMARY KEY,
+      valor TEXT
+    )
+  `);
+
   db.run('CREATE INDEX IF NOT EXISTS idx_pedidos_status ON pedidos(status)');
   db.run('CREATE INDEX IF NOT EXISTS idx_pedidos_gateway ON pedidos(gateway_transacao_id)');
   db.run('CREATE INDEX IF NOT EXISTS idx_keys_key ON keys_emitidas(key)');
@@ -282,6 +289,39 @@ function toggleCodigoAtivo(id) {
   salvar();
 }
 
+function getConfig(chave, padrao) {
+  const stmt = db.prepare('SELECT valor FROM config WHERE chave = ?');
+  stmt.bind([chave]);
+  if (stmt.step()) {
+    const valor = stmt.getAsObject().valor;
+    stmt.free();
+    return valor != null && valor !== '' ? valor : padrao;
+  }
+  stmt.free();
+  return padrao;
+}
+
+function setConfig(chave, valor) {
+  const stmt = db.prepare('INSERT OR REPLACE INTO config (chave, valor) VALUES (?, ?)');
+  stmt.run([chave, valor]);
+  stmt.free();
+  salvar();
+}
+
+function getPixConfig() {
+  return {
+    chave: getConfig('pix_chave', process.env.PIX_KEY || 'sua-chave-pix-aqui'),
+    tipo: getConfig('pix_tipo', process.env.PIX_KEY_TYPE || 'aleatoria'),
+    recebedor: getConfig('pix_recebedor', process.env.PIX_RECEIVER_NAME || 'Bela Vista Roleplay')
+  };
+}
+
+function setPixConfig({ chave, tipo, recebedor }) {
+  setConfig('pix_chave', chave || '');
+  setConfig('pix_tipo', tipo || '');
+  setConfig('pix_recebedor', recebedor || '');
+}
+
 module.exports = {
   get db() { return db; },
   init,
@@ -305,5 +345,7 @@ module.exports = {
   listarCodigos,
   buscarCodigo,
   criarCodigo,
-  toggleCodigoAtivo
+  toggleCodigoAtivo,
+  getPixConfig,
+  setPixConfig
 };

@@ -292,6 +292,17 @@ router.patch('/codigos/:id/ativo', (req, res) => {
   res.json({ success: true });
 });
 
+router.get('/pix', (req, res) => {
+  res.json({ pix: db.getPixConfig() });
+});
+
+router.put('/pix', (req, res) => {
+  const { chave, tipo, recebedor } = req.body;
+  if (!chave || !tipo || !recebedor) return res.status(400).json({ error: 'chave, tipo e recebedor obrigatorios' });
+  db.setPixConfig({ chave: chave.trim(), tipo: tipo.trim(), recebedor: recebedor.trim() });
+  res.json({ success: true, pix: db.getPixConfig() });
+});
+
 router.post('/gerar-key', async (req, res) => {
   try {
     const { produto_id, quantidade } = req.body;

@@ -81,9 +81,10 @@ router.post('/', async (req, res) => {
       codigo_usado: codigoUsado
     });
 
-    const pixKey = process.env.PIX_KEY || 'sua-chave-pix-aqui';
-    const pixKeyType = process.env.PIX_KEY_TYPE || 'aleatoria';
-    const receiverName = process.env.PIX_RECEIVER_NAME || 'Bela Vista Roleplay';
+    const pixConfig = db.getPixConfig();
+    const pixKey = pixConfig.chave;
+    const pixKeyType = pixConfig.tipo;
+    const receiverName = pixConfig.recebedor;
 
     res.json({
       pedido_id: pedidoId,
@@ -174,11 +175,7 @@ router.get('/:numero', (req, res) => {
       criado_em: pedido.criado_em,
       expira_em: pedido.expira_em,
       imagem_url: prod ? prod.imagem_url : '',
-      pix: pedido.status === 'pendente' ? {
-        chave: process.env.PIX_KEY || 'sua-chave-pix-aqui',
-        tipo: process.env.PIX_KEY_TYPE || 'aleatoria',
-        recebedor: process.env.PIX_RECEIVER_NAME || 'Bela Vista Roleplay'
-      } : null
+      pix: pedido.status === 'pendente' ? db.getPixConfig() : null
     }
   });
 });

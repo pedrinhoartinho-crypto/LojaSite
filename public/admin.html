@@ -80,6 +80,7 @@
         <button class="admin-btn secondary" onclick="gerenciarProdutos()" style="font-size:11px">Produtos</button>
         <button class="admin-btn secondary" onclick="mostrarGerarKey()" style="font-size:11px">Gerar Key</button>
         <button class="admin-btn secondary" onclick="mostrarCodigos()" style="font-size:11px">Cupons</button>
+        <button class="admin-btn secondary" onclick="mostrarPix()" style="font-size:11px">Pix</button>
       </div>
 
       <div id="admin-produtos" style="display:none;margin-bottom:20px">
@@ -109,6 +110,25 @@
           <button class="admin-btn" style="font-size:12px;padding:6px 16px" onclick="criarCodigo()">Criar</button>
         </div>
         <div id="codigos-lista"></div>
+      </div>
+
+      <div id="admin-pix" style="display:none;margin-bottom:20px">
+        <h3 style="color:var(--laranja-500);margin-bottom:15px">Chave Pix</h3>
+        <div style="background:var(--cinza-800);border:1px solid var(--laranja-700);border-radius:8px;padding:15px;max-width:420px">
+          <label style="color:var(--cinza-200);font-size:12px;display:block;margin-bottom:4px">Chave</label>
+          <input type="text" id="pix-chave" placeholder="chave pix" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:8px 12px;border-radius:6px;font-size:13px;width:100%;margin-bottom:12px;box-sizing:border-box">
+          <label style="color:var(--cinza-200);font-size:12px;display:block;margin-bottom:4px">Tipo</label>
+          <select id="pix-tipo" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:8px 12px;border-radius:6px;font-size:13px;width:100%;margin-bottom:12px">
+            <option value="aleatoria">Aleatoria</option>
+            <option value="email">Email</option>
+            <option value="telefone">Telefone</option>
+            <option value="cpf">CPF</option>
+            <option value="cnpj">CNPJ</option>
+          </select>
+          <label style="color:var(--cinza-200);font-size:12px;display:block;margin-bottom:4px">Recebedor</label>
+          <input type="text" id="pix-recebedor" placeholder="Nome do recebedor" style="background:var(--cinza-900);border:1px solid var(--cinza-600);color:var(--branco);padding:8px 12px;border-radius:6px;font-size:13px;width:100%;margin-bottom:15px;box-sizing:border-box">
+          <button class="admin-btn" onclick="salvarPix()" style="font-size:12px;padding:8px 20px">Salvar</button>
+        </div>
       </div>
 
       <div id="admin-gerar-key" style="display:none;margin-bottom:20px">
@@ -442,6 +462,34 @@
     async function toggleCodigo(id) {
       const data = await api('/api/admin/codigos/' + id + '/ativo', 'PATCH');
       if (data && data.success) mostrarCodigos();
+    }
+
+    async function mostrarPix() {
+      document.getElementById('admin-tabela').style.display = 'none';
+      document.getElementById('admin-pagination').style.display = 'none';
+      document.getElementById('admin-produtos').style.display = 'none';
+      document.getElementById('admin-gerar-key').style.display = 'none';
+      document.getElementById('admin-codigos').style.display = 'none';
+      document.getElementById('admin-pix').style.display = 'block';
+
+      const data = await api('/api/admin/pix');
+      if (!data || !data.pix) return;
+      document.getElementById('pix-chave').value = data.pix.chave;
+      document.getElementById('pix-tipo').value = data.pix.tipo;
+      document.getElementById('pix-recebedor').value = data.pix.recebedor;
+    }
+
+    async function salvarPix() {
+      const chave = document.getElementById('pix-chave').value.trim();
+      const tipo = document.getElementById('pix-tipo').value;
+      const recebedor = document.getElementById('pix-recebedor').value.trim();
+      if (!chave || !tipo || !recebedor) return alerta('Preencha todos os campos', 'error');
+      const data = await api('/api/admin/pix', 'PUT', { chave, tipo, recebedor });
+      if (data && data.success) {
+        alerta('Chave Pix salva!', 'success');
+      } else {
+        alerta('Erro: ' + (data?.error || 'desconhecido'), 'error');
+      }
     }
 
     async function criarCodigo() {
