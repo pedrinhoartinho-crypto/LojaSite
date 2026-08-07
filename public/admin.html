@@ -210,7 +210,7 @@
     }
 
     async function carregarTodos(pagina = 1) {
-      document.getElementById('admin-produtos').style.display = 'none';
+      esconderAbas();
       document.getElementById('admin-tabela').style.display = '';
       document.getElementById('admin-pagination').style.display = '';
       paginaAtual = pagina;
@@ -220,6 +220,9 @@
     }
 
     async function carregarPendentes() {
+      esconderAbas();
+      document.getElementById('admin-tabela').style.display = '';
+      document.getElementById('admin-pagination').style.display = '';
       const data = await api('/api/admin/pagamentos/pendentes');
       if (!data) return;
       renderTabela(data.dados, 1);
@@ -296,9 +299,14 @@
       }
     }
 
+    function esconderAbas() {
+      ['admin-tabela', 'admin-pagination', 'admin-produtos', 'admin-gerar-key', 'admin-codigos', 'admin-pix'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+    }
+
     async function gerenciarProdutos() {
-      document.getElementById('admin-tabela').style.display = 'none';
-      document.getElementById('admin-pagination').style.display = 'none';
+      esconderAbas();
       document.getElementById('admin-produtos').style.display = 'block';
 
       const data = await api('/api/admin/produtos');
@@ -396,9 +404,7 @@
     }
 
     async function mostrarGerarKey() {
-      document.getElementById('admin-tabela').style.display = 'none';
-      document.getElementById('admin-pagination').style.display = 'none';
-      document.getElementById('admin-produtos').style.display = 'none';
+      esconderAbas();
       document.getElementById('admin-gerar-key').style.display = 'block';
       document.getElementById('resultado-key').style.display = 'none';
 
@@ -435,10 +441,7 @@
     }
 
     async function mostrarCodigos() {
-      document.getElementById('admin-tabela').style.display = 'none';
-      document.getElementById('admin-pagination').style.display = 'none';
-      document.getElementById('admin-produtos').style.display = 'none';
-      document.getElementById('admin-gerar-key').style.display = 'none';
+      esconderAbas();
       document.getElementById('admin-codigos').style.display = 'block';
 
       const data = await api('/api/admin/codigos');
@@ -465,11 +468,7 @@
     }
 
     async function mostrarPix() {
-      document.getElementById('admin-tabela').style.display = 'none';
-      document.getElementById('admin-pagination').style.display = 'none';
-      document.getElementById('admin-produtos').style.display = 'none';
-      document.getElementById('admin-gerar-key').style.display = 'none';
-      document.getElementById('admin-codigos').style.display = 'none';
+      esconderAbas();
       document.getElementById('admin-pix').style.display = 'block';
 
       const data = await api('/api/admin/pix');
